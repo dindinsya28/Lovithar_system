@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arsip Sistem Lovithar & Galaksi Menzalaris</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            background-color: #020208; 
+            color: #e2e8f0; 
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; 
+            overflow: hidden; 
+            height: 100vh;
+        }
+
+        /* Top Navigation Bar */
+        #top-nav {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 55px;
+            background: rgba(8, 12, 24, 0.95);
+            border-bottom: 1px solid rgba(59, 130, 246, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            z-index: 100;
+            backdrop-filter: blur(12px);
+        }
+        .nav-brand {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: #60a5fa;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+        .tab-buttons {
+            display: flex;
+            gap: 6px;
+        }
+        .tab-btn {
+            background: rgba(255, 255, 255, 0.05);
+            color: #94a3b8;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.78rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .tab-btn:hover {
+            background: rgba(59, 130, 246, 0.2);
+            color: #fff;
+        }
+        .tab-btn.active {
+            background: #2563eb;
+            color: #ffffff;
+            border-color: #3b82f6;
+            box-shadow: 0 0 12px rgba(37, 99, 235, 0.5);
+        }
+
+        /* View Container */
+        .view-content {
+            position: absolute;
+            top: 55px;
+            left: 0;
+            width: 100vw;
+            height: calc(100vh - 55px);
+            display: none;
+        }
+        .view-content.active {
+            display: block;
+        }
+
+        /* Tab 1: 3D Layout */
+        #canvas-container { width: 100%; height: 100%; position: absolute; }
+        .ui-layer { position: absolute; z-index: 10; pointer-events: none; }
+        .interactive { pointer-events: auto; }
+        
+        #header-panel {
+            top: 20px; left: 24px;
+            background: rgba(10, 15, 29, 0.88);
+            border: 1px solid rgba(59, 130, 246, 0.35);
+            border-radius: 8px;
+            padding: 14px 18px;
+            backdrop-filter: blur(10px);
+            max-width: 400px;
+        }
+        #header-panel h1 { font-size: 1.25rem; color: #60a5fa; margin-bottom: 2px; }
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; font-size: 0.75rem; }
+        .stat-box { background: rgba(255,255,255,0.03); padding: 5px 8px; border-radius: 4px; border-left: 2px solid #3b82f6; }
+        .stat-label { color: #64748b; display: block; font-size: 0.68rem; }
+        .stat-value { font-weight: bold; color: #f8fafc; font-family: monospace; }
+
+        #control-panel {
+            bottom: 20px; left: 24px;
+            background: rgba(10, 15, 29, 0.88);
+            border: 1px solid rgba(59, 130, 246, 0.35);
+            border-radius: 8px;
+            padding: 12px 16px;
+            backdrop-filter: blur(10px);
+        }
+        .btn-group { display: flex; gap: 6px; margin-top: 6px; }
+        .ctrl-btn {
+            background: #1e293b; color: #93c5fd; border: 1px solid #3b82f6;
+            padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.75rem;
+            transition: all 0.2s;
+        }
+        .ctrl-btn:hover { background: #2563eb; color: #fff; }
+        .ctrl-btn.special { background: #059669; border-color: #10b981; color: #ecfdf5; font-weight: bold; }
+        .ctrl-btn.special:hover { background: #10b981; }
+
+        #legend-panel {
+            top: 20px; right: 24px;
+            background: rgba(10, 15, 29, 0.88);
+            border: 1px solid rgba(59, 130, 246, 0.35);
+            border-radius: 8px;
+            padding: 14px;
+            backdrop-filter: blur(10px);
+            font-size: 0.72rem;
+            width: 260px;
+        }
+        .legend-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
+        .legend-tag { display: flex; align-items: center; gap: 6px; }
+        .color-dot { width: 9px; height: 9px; border-radius: 50%; }
+        .legend-count { font-family: monospace; color: #94a3b8; }
+
+        /* Scrollable Container (Tab 2, 3, 4, 5) */
+        .tab-scroll-container {
+            overflow-y: auto;
+            height: 100%;
+            padding: 24px 32px;
+            background: #030712;
+        }
+        .section-box {
+            max-width: 1280px;
+            margin: 0 auto 24px auto;
+            background: #0b0f19;
+            border: 1px solid #1e293b;
+            border-radius: 8px;
+            padding: 20px 24px;
+        }
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #60a5fa;
+            margin-bottom: 14px;
+            border-bottom: 1px solid #1e293b;
+            padding-bottom: 6px;
+        }
+        table.data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+            text-align: left;
+        }
+        table.data-table th {
+            background: #111827;
+            color: #94a3b8;
+            padding: 9px 12px;
+            border-bottom: 2px solid #1e293b;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            letter-spacing: 0.5px;
+        }
+        table.data-table td {
+            padding: 8px 12px;
+            border-bottom: 1px solid #1f2937;
+            color: #cbd5e1;
+        }
+        table.data-table tr:hover td {
+            background: rgba(59, 130, 246, 0.05);
+            color: #fff;
+        }
+        .mono { font-family: 'Courier New', Courier, monospace; }
+        .tag-1g {
+            background: rgba(34, 197, 94, 0.15);
+            color: #4ade80;
+            border: 1px solid #22c55e;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.68rem;
+            font-weight: 600;
+        }
+
+        /* Charts Layout */
+        .charts-grid {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .chart-card {
+            background: #0b0f19;
+            border: 1px solid #1e293b;
+            border-radius: 8px;
+            padding: 18px;
+            min-height: 380px;
+        }
+        .chart-full { grid-column: span 2; min-height: 380px; }
+
+        /* Generator UI Layout */
+        .gen-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 18px;
+            background: rgba(255,255,255,0.02);
+            padding: 16px;
+            border-radius: 6px;
+            border: 1px solid #1e293b;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.75rem;
+            color: #94a3b8;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+        .form-group select, .form-group input, .form-group textarea {
+            width: 100%;
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: #f8fafc;
+            padding: 8px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            outline: none;
+        }
+        .form-group select:focus, .form-group input:focus, .form-group textarea:focus { border-color: #3b82f6; }
+        
+        .action-bar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+        .action-left { display: flex; gap: 8px; }
+        .action-right { font-size: 0.8rem; color: #94a3b8; }
+        .btn-gen {
+            background: #2563eb;
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-gen:hover { background: #1d4ed8; }
+        .btn-excel {
+            background: #15803d;
+            color: #f0fdf4;
+            border: 1px solid #22c55e;
+            padding: 8px 14px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-excel:hover { background: #16a34a; }
+        .btn-pdf {
+            background: #9333ea;
+            color: #faf5ff;
+            border: 1px solid #a855f7;
+            padding: 8px 14px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-pdf:hover { background: #a855f7; }
+        .btn-txt {
+            background: #0284c7;
+            color: #f0f9ff;
+            border: 1px solid #38bdf8;
+            padding: 8px 14px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-txt:hover { background: #0369a1; }
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid #ef4444;
+            padding: 8px 14px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+        .btn-danger:hover { background: #ef4444; color: #fff; }
+        .code-pill {
+            background: #0f172a;
+            color: #38bdf8;
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid #0284c7;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            font-size: 0.75rem;
+        }
+
+        /* Dynamic Lore Typography & Card */
+        .lore-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid #1e293b;
+            border-left: 3px solid #60a5fa;
+            border-radius: 6px;
+            padding: 16px 20px;
+            margin-bottom: 16px;
+            transition: all 0.2s;
+        }
+        .lore-card:hover {
+            border-color: #3b82f6;
+            background: rgba(15, 23, 42, 0.9);
+        }
+        .lore-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .lore-title {
+            font-size: 1rem;
+            font-weight: bold;
+            color: #93c5fd;
+        }
+        .lore-body {
+            font-size: 0.92rem;
+            line-height: 1.8;
+            color: #cbd5e1;
+            text-align: justify;
+        }
+        .lore-action-btn {
+            background: none;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            font-size: 0.75rem;
+            padding: 2px 6px;
+        }
+        .lore-action-btn:hover { text-decoration: underline; }
+
+        /* Cyberpunk Printable Container for PDF */
+        #cyberpunk-pdf-template {
+            display: none;
+            background: #050814;
+            color: #e2e8f0;
+            padding: 30px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .cyber-header {
+            border: 2px solid #00f0ff;
+            padding: 16px;
+            background: #02040a;
+            margin-bottom: 20px;
+            box-shadow: 0 0 10px rgba(0,240,255,0.2);
+        }
+        .cyber-title { font-size: 1.5rem; color: #00f0ff; letter-spacing: 2px; text-transform: uppercase; font-weight: bold; }
+        .cyber-sub { font-size: 0.8rem; color: #ff007f; margin-top: 4px; }
+        .cyber-badge { display: inline-block; background: #ff007f; color: #fff; padding: 2px 6px; font-size: 0.7rem; font-weight: bold; margin-top: 6px; }
+        .cyber-section { border-left: 2px solid #00f0ff; padding-left: 12px; margin-bottom: 20px; }
+        .cyber-sec-title { color: #ffe600; font-size: 1.05rem; font-weight: bold; margin-bottom: 6px; }
+        .cyber-content { font-size: 0.85rem; line-height: 1.6; color: #cbd5e1; }
+    </style>
+    <!-- Dependencies: Three.js, Chart.js, SheetJS, & html2pdf.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+
+    <!-- Header Navigation Bar -->
+    <div id="top-nav">
+        <div class="nav-brand">Sistem Bintang Lovithar</div>
+        <div class="tab-buttons">
+            <button class="tab-btn active" onclick="switchTab('3d')">Visual 3D Real-Time</button>
+            <button class="tab-btn" onclick="switchTab('table')">Tabel Data Presisi</button>
+            <button class="tab-btn" onclick="switchTab('charts')">Grafik Skala</button>
+            <button class="tab-btn" onclick="switchTab('generator')">Generator (IndexedDB + Excel)</button>
+            <button class="tab-btn" onclick="switchTab('lore')" style="border-color: #8b5cf6; color: #c084fc;">Canon Lore: Hyperion & Menzalaris</button>
+        </div>
+    </div>
+
+    <!-- TAB 1: 3D Engine View -->
+    <div id="tab-3d" class="view-content active">
+        <div id="canvas-container"></div>
+
+        <div id="header-panel" class="ui-layer">
+            <h1>Lovithar Hyperstar</h1>
+            <div style="font-size: 0.72rem; color: #94a3b8;">Sistem Eksponensial: 8.589.934.592 Dunia (2³³)</div>
+            <div class="stat-grid">
+                <div class="stat-box">
+                    <span class="stat-label">Massa Lovithar</span>
+                    <span class="stat-value">1,45 × 10⁹ M☉</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Radius Total</span>
+                    <span class="stat-value">120 - 1.850 ly</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Cincin Konsentris</span>
+                    <span class="stat-value">65.536 Jalur</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Dunia Earthlike (1g)</span>
+                    <span class="stat-value" style="color: #4ade80;">1.073.741.824</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="legend-panel" class="ui-layer">
+            <div style="font-weight: bold; color: #cbd5e1; margin-bottom: 6px; border-bottom: 1px solid #334155; padding-bottom: 3px;">DISTRIBUSI ORBIT</div>
+            <div class="legend-item"><div class="legend-tag"><span class="color-dot" style="background:#f97316;"></span>Pyro-Metalik</div><span class="legend-count">1.073.741.824</span></div>
+            <div class="legend-item"><div class="legend-tag"><span class="color-dot" style="background:#eab308;"></span>Transisi Dalam</div><span class="legend-count">1.073.741.824</span></div>
+            <div class="legend-item"><div class="legend-tag"><span class="color-dot" style="background:#22c55e;"></span>Zona Biosfer</div><span class="legend-count">2.415.919.104</span></div>
+            <div class="legend-item"><div class="legend-tag"><span class="color-dot" style="background:#a855f7;"></span>Super-Jovian</div><span class="legend-count">1.610.612.736</span></div>
+            <div class="legend-item"><div class="legend-tag"><span class="color-dot" style="background:#06b6d4;"></span>Krio-Es</div><span class="legend-count">1.342.177.280</span></div>
+            <div class="legend-item"><div class="legend-tag"><span class="color-dot" style="background:#64748b;"></span>Periferal Luar</div><span class="legend-count">1.207.959.552</span></div>
+        </div>
+
+        <div id="control-panel" class="ui-layer interactive">
+            <span style="font-size: 0.72rem; color: #94a3b8;">Kamera & Ekspor Visual:</span>
+            <div class="btn-group">
+                <button class="ctrl-btn" onclick="setCameraView('overview')">Macro (1.850 ly)</button>
+                <button class="ctrl-btn" onclick="setCameraView('biosphere')">Biosfer 1g</button>
+                <button class="ctrl-btn" onclick="setCameraView('jovian')">Super-Jovian</button>
+                <button class="ctrl-btn special" onclick="exportJPEG()">Simpan JPEG</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: Table View -->
+    <div id="tab-table" class="view-content tab-scroll-container">
+        <div class="section-box">
+            <div class="section-title">TABEL DISTRIBUSI LENGKAP 15 TIPE PLANET (SISTEM LOVITHAR)</div>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Zona Orbital</th>
+                        <th>Jarak (ly)</th>
+                        <th>Tipe Planet</th>
+                        <th>Jumlah Cincin</th>
+                        <th>Total Planet Eksak</th>
+                        <th>Rentang Diameter</th>
+                        <th>Karakteristik & Gravitasi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td rowspan="4"><b>Pyro-Metalik</b></td><td rowspan="4">120 - 245 ly</td><td>Lava World</td><td class="mono">2.048</td><td class="mono">268.435.456</td><td class="mono">30.000 - 55.000 km</td><td>Lautan Magma Ekstrem</td></tr>
+                    <tr><td>Logam / Besi Murni</td><td class="mono">2.048</td><td class="mono">268.435.456</td><td class="mono">20.000 - 35.000 km</td><td>Inti Logam Padat</td></tr>
+                    <tr><td>Magnet World</td><td class="mono">1.024</td><td class="mono">134.217.728</td><td class="mono">25.000 - 45.000 km</td><td>Induksi Dinamo Plasma</td></tr>
+                    <tr><td>Mercury-like</td><td class="mono">3.072</td><td class="mono">402.653.184</td><td class="mono">12.500 - 18.000 km</td><td>Silikat Kering Kawah</td></tr>
+
+                    <tr><td rowspan="2"><b>Transisi Dalam</b></td><td rowspan="2">245 - 450 ly</td><td>Venus-like</td><td class="mono">4.096</td><td class="mono">536.870.912</td><td class="mono">28.000 - 50.000 km</td><td>Atmosfer Asam Hiperbarik</td></tr>
+                    <tr><td>Super-Earth</td><td class="mono">4.096</td><td class="mono">536.870.912</td><td class="mono">60.000 - 180.000 km</td><td><span class="tag-1g">Terkunci 1.0g</span> Material Eksotis</td></tr>
+
+                    <tr><td rowspan="3"><b>Zona Biosfer Utama</b></td><td rowspan="3">450 - 850 ly</td><td><b>Earthlike</b></td><td class="mono"><b>8.192</b></td><td class="mono"><b>1.073.741.824</b></td><td class="mono"><b>12.742 - 40.000 km</b></td><td><span class="tag-1g">Terkunci 1.0g</span> Biosfer Standar</td></tr>
+                    <tr><td>Ocean World</td><td class="mono">6.144</td><td class="mono">805.306.368</td><td class="mono">35.000 - 80.000 km</td><td><span class="tag-1g">Terkunci 1.0g</span> Samudra Global</td></tr>
+                    <tr><td>Mars-like</td><td class="mono">4.096</td><td class="mono">536.870.912</td><td class="mono">18.000 - 26.000 km</td><td>Gurun Oksida Besi Dingin</td></tr>
+
+                    <tr><td rowspan="2"><b>Zona Jovian</b></td><td rowspan="2">850 - 1.350 ly</td><td>Gas (Ukuran Sedang)</td><td class="mono">6.144</td><td class="mono">805.306.368</td><td class="mono">650.000 - 1.800.000 km</td><td>Badai Hidrogen-Helium</td></tr>
+                    <tr><td><b>Super-Jovian</b></td><td class="mono">6.144</td><td class="mono">805.306.368</td><td class="mono">1.800.000 - 4.300.000 km</td><td>Maksimal Sistem (Non-Fusi)</td></tr>
+
+                    <tr><td rowspan="2"><b>Zona Krio-Es</b></td><td rowspan="2">1.350 - 1.650 ly</td><td>Ice Giant (Neptunian)</td><td class="mono">6.144</td><td class="mono">805.306.368</td><td class="mono">180.000 - 650.000 km</td><td>Fluida Superkritis</td></tr>
+                    <tr><td>Es Padat / Glacial</td><td class="mono">4.096</td><td class="mono">536.870.912</td><td class="mono">40.000 - 95.000 km</td><td>Kriovulkanik Metana-Nitrogen</td></tr>
+
+                    <tr><td rowspan="2"><b>Periferal Luar</b></td><td rowspan="2">1.650 - 1.850 ly</td><td>Outer Terrestrial</td><td class="mono">4.096</td><td class="mono">536.870.912</td><td class="mono">30.000 - 65.000 km</td><td>Batuan Silikat Beku</td></tr>
+                    <tr><td>Dwarf Planet</td><td class="mono">5.120</td><td class="mono">671.088.640</td><td class="mono">8.900 - 12.500 km</td><td>Minimal Sistem (8.900 km)</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB 3: Charts View -->
+    <div id="tab-charts" class="view-content tab-scroll-container">
+        <div class="charts-grid">
+            <div class="chart-card">
+                <div class="section-title">Distribusi Populasi Planet Berdasarkan Tipe</div>
+                <canvas id="chartPopulation"></canvas>
+            </div>
+            <div class="chart-card">
+                <div class="section-title">Pangsa Zona Orbital (Persentase Total)</div>
+                <canvas id="chartZones"></canvas>
+            </div>
+            <div class="chart-card chart-full">
+                <div class="section-title">Perbandingan Spektrum Diameter Maksimal Tiap Tipe (Skala Logaritmik km)</div>
+                <canvas id="chartDiameter"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 4: Planet Catalog Generator & IndexedDB Registry -->
+    <div id="tab-generator" class="view-content tab-scroll-container">
+        <div class="section-box">
+            <div class="section-title">GENERATOR KATALOG & DATABASE PLANET (KELIPATAN 50 + EKSPOR EXCEL)</div>
+            
+            <div class="gen-panel">
+                <div class="form-group">
+                    <label>PILIH ZONA ORBITAL:</label>
+                    <select id="genZone">
+                        <option value="ALL">Semua Zona (Acak Sistem Global)</option>
+                        <option value="Z1">Zona 1: Pyro-Metalik (120 - 245 ly)</option>
+                        <option value="Z2">Zona 2: Transisi Dalam (245 - 450 ly)</option>
+                        <option value="Z3" selected>Zona 3: Habitable Biosfer (450 - 850 ly)</option>
+                        <option value="Z4">Zona 4: Jovian & Gas Raksasa (850 - 1.350 ly)</option>
+                        <option value="Z5">Zona 5: Krio-Fluida & Es (1.350 - 1.650 ly)</option>
+                        <option value="Z6">Zona 6: Periferal Luar (1.650 - 1.850 ly)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>JUMLAH GENERATE PER BATCH (KELIPATAN 50):</label>
+                    <select id="genCount">
+                        <option value="50">50 Planet</option>
+                        <option value="100" selected>100 Planet</option>
+                        <option value="150">150 Planet</option>
+                        <option value="200">200 Planet</option>
+                        <option value="250">250 Planet</option>
+                        <option value="300">300 Planet</option>
+                        <option value="350">350 Planet</option>
+                        <option value="400">400 Planet</option>
+                        <option value="450">450 Planet</option>
+                        <option value="500">500 Planet (Maksimal)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>PENCARIAN / FILTER DATABASE:</label>
+                    <input type="text" id="dbSearch" placeholder="Cari Kode Hex, Tipe, atau Cincin..." oninput="filterCatalogTable()">
+                </div>
+            </div>
+
+            <div class="action-bar">
+                <div class="action-left">
+                    <button class="btn-gen" onclick="generateBatchPlanets()">+ Generate Batch Planet</button>
+                    <button class="btn-excel" onclick="exportIndexedDBExcel()">📊 Unduh Excel (.xlsx)</button>
+                    <button class="btn-danger" onclick="clearIndexedDBData()">Reset Database</button>
+                </div>
+                <div class="action-right">
+                    Total Tersimpan di IndexedDB: <b id="dbCountDisplay" style="color: #60a5fa;">0</b> Entri
+                </div>
+            </div>
+
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Kode Unik Hex (Opsi 1)</th>
+                        <th>Cincin Orbit (Hex / Dec)</th>
+                        <th>Slot Orbit (Hex / Dec)</th>
+                        <th>Tipe Planet</th>
+                        <th>Diameter Eksak</th>
+                        <th>Gravitasi Inti</th>
+                        <th>Zona & Karakteristik Spesifik</th>
+                    </tr>
+                </thead>
+                <tbody id="catalogTableBody">
+                    <tr><td colspan="7" style="text-align:center; color:#64748b; padding:30px;">Belum ada planet di database. Pilih parameter di atas lalu klik "+ Generate Batch Planet".</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB 5: Dynamic Lore with Add Form & Cyberpunk PDF / TXT Export -->
+    <div id="tab-lore" class="view-content tab-scroll-container">
+        
+        <!-- Table Box: Hyperion Classification -->
+        <div class="section-box">
+            <div class="section-title">TAKSONOMI BINTANG KELAS HYPERION (REGION GALAKSI MENZALARIS - 50 JUTA LY)</div>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Kode Spektral</th>
+                        <th>Tipe Bintang Hyperion</th>
+                        <th>Massa Pusat (M☉)</th>
+                        <th>Populasi Sistem di Region</th>
+                        <th>Rentang Cincin Orbit</th>
+                        <th>Kapasitas Planet / Sistem</th>
+                        <th>Karakteristik & Radiasi Foton</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><b style="color:#facc15;">HY-1 (Gold)</b></td>
+                        <td><b>Lovithar-Class</b> (Solar-Engine Prime)</td>
+                        <td class="mono">1,0 - 2,5 × 10⁹</td>
+                        <td class="mono">131.072 (2¹⁷)</td>
+                        <td class="mono">49.152 - 65.536</td>
+                        <td class="mono">6,44 Miliar - 8,59 Miliar</td>
+                        <td>Spektrum kuning-putih stabil. Rasio biosfer laik huni tertinggi (~1,07 Miliar Earthlike).</td>
+                    </tr>
+                    <tr>
+                        <td><b style="color:#60a5fa;">HY-2 (Blue)</b></td>
+                        <td><b>Aethelion-Class</b> (High-Luminosity Blue)</td>
+                        <td class="mono">2,5 - 8,0 × 10⁹</td>
+                        <td class="mono">65.536 (2¹⁶)</td>
+                        <td class="mono">98.304 - 131.072</td>
+                        <td class="mono">12,88 Miliar - 17,18 Miliar</td>
+                        <td>Foton UV & biru ekstrem. Zona Pyro-Metalik sangat luas, piringan luar penuh Mega-Jovian.</td>
+                    </tr>
+                    <tr>
+                        <td><b style="color:#f87171;">HY-3 (Crimson)</b></td>
+                        <td><b>Vaelthor-Class</b> (Deep-Infrared Titan)</td>
+                        <td class="mono">0,5 - 1,2 × 10⁹</td>
+                        <td class="mono">131.072 (2¹⁷)</td>
+                        <td class="mono">24.576 - 32.768</td>
+                        <td class="mono">3,22 Miliar - 4,29 Miliar</td>
+                        <td>Emisi inframerah dalam. Sistem kompak, dominasi Ocean World beratmosfer tebal dan dunia es.</td>
+                    </tr>
+                    <tr>
+                        <td><b style="color:#c084fc;">HY-4 (Violet)</b></td>
+                        <td><b>Chronolith-Class</b> (Quantum-Magnetic)</td>
+                        <td class="mono">1,5 - 4,0 × 10⁹</td>
+                        <td class="mono">65.536 (2¹⁶)</td>
+                        <td class="mono">65.536 - 98.304</td>
+                        <td class="mono">8,59 Miliar - 12,88 Miliar</td>
+                        <td>Dinamo fluks medan magnet raksasa. Menghasilkan jutaan Magnet World dengan aurora abadi.</td>
+                    </tr>
+                    <tr>
+                        <td><b style="color:#e2e8f0;">HY-5 (Silver)</b></td>
+                        <td><b>Zephyrian-Class</b> (Diffuse Nebular)</td>
+                        <td class="mono">0,8 - 2,0 × 10⁹</td>
+                        <td class="mono">98.304 (1,5×2¹⁶)</td>
+                        <td class="mono">32.768 - 49.152</td>
+                        <td class="mono">4,29 Miliar - 6,44 Miliar</td>
+                        <td>Korona gas transparan penyaring radiasi. Piringan orbital terlindung dengan kerapatan biosfer stabil.</td>
+                    </tr>
+                    <tr>
+                        <td><b style="color:#94a3b8;">HY-6 (Obsidian)</b></td>
+                        <td><b>Morvath-Class</b> (Gravito-Dark Nexus)</td>
+                        <td class="mono">4,0 - 12,0 × 10⁹</td>
+                        <td class="mono">32.768 (2¹⁵)</td>
+                        <td class="mono">131.072 - 262.144</td>
+                        <td class="mono">17,18 Miliar - 34,36 Miliar</td>
+                        <td>Raksasa gravitasi gelap tertinggi. Menampung puluhan miliar raksasa gas dingin dan planet kerdil beku.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Dynamic Lore Management Section -->
+        <div class="section-box">
+            <div class="section-title">KOLOM CANON LORE DINAMIS (PENAMBAHAN & EKSPOR DOKUMEN)</div>
+            
+            <!-- Add Lore Form -->
+            <div class="gen-panel" style="grid-template-columns: 1fr;">
+                <div style="font-weight: 600; font-size: 0.85rem; color: #60a5fa; margin-bottom: 8px;">+ TAMBAH PARAGRAF CANON BARU</div>
+                <div style="display: grid; grid-template-columns: 120px 1fr; gap: 12px; margin-bottom: 10px;">
+                    <div class="form-group">
+                        <label>NOMOR URUT:</label>
+                        <input type="number" id="loreIndex" placeholder="11" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label>SUB-JUDUL CANON / TOPIK:</label>
+                        <input type="text" id="loreTitle" placeholder="Contoh: Protokol Kolonisasi & Koridor Navigasi Antar-Cincin...">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>ISI NARASI KOMPREHENSIF:</label>
+                    <textarea id="loreContent" rows="4" placeholder="Tuliskan narasi lore detail di sini untuk memperkaya ekspansi canon..."></textarea>
+                </div>
+                <div style="display:flex; justify-content: flex-end; margin-top: 8px;">
+                    <button class="btn-gen" onclick="addNewLoreEntry()">Simpan ke Canon Database</button>
+                </div>
+            </div>
+
+            <!-- Export Actions -->
+            <div class="action-bar" style="border-top: 1px solid #1e293b; padding-top: 14px; margin-top: 14px;">
+                <div class="action-left">
+                    <button class="btn-txt" onclick="exportLoreTXT()">📄 Unduh Lore (.TXT)</button>
+                    <button class="btn-pdf" onclick="exportLoreCyberpunkPDF()">⚡ Unduh PDF Cyberpunk (.PDF)</button>
+                </div>
+                <div class="action-right">
+                    Total Paragraf Canon: <b id="loreCountDisplay" style="color: #60a5fa;">10</b> Entri
+                </div>
+            </div>
+
+            <!-- Lore Cards Container -->
+            <div id="loreCardsContainer" style="margin-top: 18px;"></div>
+        </div>
+
+    </div>
+
+    <!-- Hidden Cyberpunk Template for PDF Rendering -->
+    <div id="cyberpunk-pdf-template">
+        <div class="cyber-header">
+            <div class="cyber-title">// ARSIP KOSMOLOGI CANON //</div>
+            <div class="cyber-sub">SISTEM BINTANG LOVITHAR & MAKRO-STRUKTUR MENZALARIS</div>
+            <div class="cyber-badge">KLASIFIKASI: LEVEL-6 HYPER-CANON ARTIFACT</div>
+            <div style="margin-top: 8px; font-size: 0.7rem; color: #64748b;">
+                TERMINAL ID: MENZALARIS-SEC-09 // TOTAL DUNIA: 8.589.934.592 (2^33) // STATUS MEDAN: 1.0G LOCKED
+            </div>
+        </div>
+        <div id="cyberpunk-pdf-body"></div>
+    </div>
+
+    <script>
+        // Tab Navigation
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.view-content').forEach(view => view.classList.remove('active'));
+
+            const tabMap = {
+                '3d': 0,
+                'table': 1,
+                'charts': 2,
+                'generator': 3,
+                'lore': 4
+            };
+            document.querySelectorAll('.tab-btn')[tabMap[tabId]].classList.add('active');
+            document.getElementById('tab-' + tabId).classList.add('active');
+
+            if (tabId === 'charts') renderChartsOnce();
+            if (tabId === 'generator') loadCatalogFromIndexedDB();
+            if (tabId === 'lore') loadLoreFromIndexedDB();
+        }
+
+        // ==========================================
+        // DYNAMIC LORE ENGINE & INDEXEDDB SEEDING
+        // ==========================================
+        const LORE_STORE_NAME = "canon_lore";
+        
+        const DEFAULT_CANON_PARAGRAPHS = [
+            {
+                id: 1,
+                title: "Paradigma Kosmologi Alternatif dan Runtuhnya Batas Linear",
+                content: "Alam semesta ini beroperasi di bawah fondasi hukum fisika non-konvensional yang melepaskan diri secara mutlak dari batasan linear tata surya kita. Fenomena pembentukan sistem bintang tidak lagi diikat oleh batas ketidakstabilan orbital minor atau kehancuran termonuklir dini, melainkan digerakkan oleh prinsip kestabilan makro-eksponensial. Struktur kosmis diizinkan menampung materi dalam volume dan kerapatan raksasa, menghasilkan piringan akresi purba yang mampu memadat menjadi miliaran dunia terorganisir di bawah cengkeraman satu inti tunggal."
+            },
+            {
+                id: 2,
+                title: "Anatomi Hyperstar Lovithar dan Fusi Ambang Jenuh (Capped Fusion)",
+                content: "Di pusat sistem berdiri Lovithar, sebuah bintang raksasa kelas Solar-Engine Prime dengan massa masif mencapai 1,45 miliar kali massa Matahari kita (1,45 × 10⁹ M☉). Di semesta kita, massa sebesar ini niscaya runtuh seketika menjadi singularitas lubang hitam atau hancur oleh tekanan radiasi batas Eddington. Namun di semesta ini, mekanisme Capped Fusion menetapkan ambang batas kecepatan reaksi fusi inti secara terkontrol, memungkinkan Lovithar memancarkan foton berenergi konstan dan stabil selama triliunan tahun tanpa pernah mengalami degenerasi supernova."
+            },
+            {
+                id: 3,
+                title: "Hukum Gravitasi Redup Orde Tinggi (High-Order Decaying Gravity)",
+                content: "Kunci utama stabilitas miliaran planet di sistem ini terletak pada modifikasi interaksi medan gravitasi yang meluruh secara eksponensial terhadap jarak kuadrat orde tinggi. Lovithar mempertahankan daya cengkeram globalnya yang luar biasa karena totalitas massa intinya, namun medan gravitasi lokal antarplanet meredup habis hanya dalam hitungan ratusan ribu kilometer. Hilangnya tarikan gravitasi silang antar-dunia tetangga ini melenyapkan anomali N-Body Problem, sehingga tabrakan massal maupun lontaran orbit destruktif sepenuhnya mustahil terjadi."
+            },
+            {
+                id: 4,
+                title: "Arsitektur Biner Geometris dan Formasi Klemperer Rosette",
+                content: "Sistem Lovithar tidak tersusun secara acak, melainkan dirancang dalam harmoni matematis murni berbasis pangkat biner eksak. Sebanyak 65.536 cincin orbit konsentris (2¹⁶) berjejer rapi dari radius 120 tahun cahaya hingga batas terluar di 1.850 tahun cahaya. Di setiap lintasan orbit tunggal, tepat 131.072 planet (2¹⁷) mengitari bintang dalam konfigurasi resonansi simetris melingkar, mengakumulasi total populasi eksak sebanyak 8.589.934.592 planet (2³³ dunia) yang berputar secara serempak."
+            },
+            {
+                id: 5,
+                title: "Gradasi Enam Zona Termal dan Keragaman 15 Kelas Planet",
+                content: "Piringan konsentris Lovithar terbagi menjadi enam zona ekologis utama yang melahirkan 15 klasifikasi planet diskrit. Lingkar dalam didominasi oleh Zona Pyro-Metalik (120–245 ly) berisi dunia Lava, Logam Murni, dan Magnetik, disusul Zona Transisi Dalam (245–450 ly) dengan atmosfer hiperbarik Venus-like. Di zona tengah terbentang Zona Biosfer Utama (450–850 ly), diikuti sabuk raksasa Zona Jovian Gas (850–1.350 ly), Zona Krio-Es (1.350–1.650 ly), hingga berakhir di Zona Periferal Luar (1.650–1.850 ly) yang dihuni miliaran batuan beku dan planet kerdil."
+            },
+            {
+                id: 6,
+                title: "Material Eksotis Penstabil Inti dan Gravitasi 1,0g Universal",
+                content: "Salah satu keajaiban terbesar di zona biosfer adalah keberadaan kisi material eksotis alami yang mengkristal di dalam mantel dan inti planet. Material ini bertindak sebagai regulator gravitonik cerdas yang secara aktif membiaskan kelebihan fluks gravitasi pada Super-Earth raksasa atau mengamplifikasi medan tarikan pada dunia berdiameter sedang. Hasilnya, sebanyak 1.073.741.824 dunia Earthlike dan 805.306.368 Ocean World memiliki gravitasi permukaan terkunci mutlak pada 1,0g (9,8 m/s²) dan tekanan atmosfer 1 atm, memungkinkan kehidupan biologis melintasi semesta tanpa komplikasi fisiologis."
+            },
+            {
+                id: 7,
+                title: "Spektrum Diameter Ekstrem: Dari Planet Kerdil hingga Super-Jovian",
+                content: "Melepas bias ukuran konvensional, rentang fisik dunia di sistem Lovithar terbentang melintasi empat orde magnitudo. Batas bawah fisik dipatok pada diameter 8.900 km pada kategori Dwarf Planet terluar, sementara puncak skala gas dipegang oleh kelas Super-Jovian dengan diameter raksasa mencapai 4.300.000 km. Berkat hukum penekanan degenerasi materi eksotis, objek gas sebesar lebih dari tiga kali diameter Matahari ini tetap bertahan stabil sebagai planet gas dingin murni tanpa pernah memicu pembakaran fusi termal sekunder."
+            },
+            {
+                id: 8,
+                title: "Region Raksasa Galaksi Menzalaris Selebar 50 Juta Tahun Cahaya",
+                content: "Keagungan Lovithar bukanlah anomali tunggal yang terisolasi, melainkan bagian dari sebuah kawasan kosmis maha-luas di Galaksi Menzalaris yang membentang selebar 50 juta tahun cahaya. Di dalam volume ruang sebesar 6,54 × 10²² ly³ ini, bercokol populasi terstruktur sebanyak 524.288 Bintang Kelas Hyperion (2¹⁹ sistem). Wilayah teritorial antar-Hyperion terpisah dengan jarak rata-rata 31.000 tahun cahaya, memberikan batas aman yang sangat longgar agar piringan cincin masing-masing sistem tidak saling bersinggungan."
+            },
+            {
+                id: 9,
+                title: "Taksonomi Enam Sub-Tipe Hyperion dan Totalitas 4,8 Kuadriliun Dunia",
+                content: "Di seluruh sektor Menzalaris, kelas Hyperion berdiferensiasi menjadi enam varian spektral: tipe Lovithar (Emas), Aethelion (Biru UV masif), Vaelthor (Inframerah merah kompak), Chronolith (Magnetik violet), Zephyrian (Nebula perak terselubung), dan Morvath (Obsidian raksasa gravitasi gelap). Rentang kapasitas setiap sistem bervariasi dari 3,22 miliar hingga 34,36 miliar planet per bintang, membentuk akumulasi fantastis sebanyak 4.843.466.702.848.000 planet (≈ 4,84 Kuadriliun dunia) yang mengitari jaringan mercusuar bintang raksasa ini."
+            },
+            {
+                id: 10,
+                title: "Koeksistensi Harmonis dengan Triliunan Bintang Reguler",
+                content: "Di antara celah ruang kosong selebar puluhan ribu tahun cahaya antarsistem Hyperion, tersebar secara alami puluhan sextillion sistem bintang reguler skala standar seperti tata surya kita. Berkat peluruhan gravitasi jarak jauh, bintang-bintang reguler ini berlayar damai melintasi arus ruang tanpa terganggu oleh cengkeraman raksasa Hyperion. Semesta Menzalaris pun berdiri megah sebagai kanvas fiksi ilmiah makro yang mathematically-sound: memadukan keindahan visual cincin biner, kestabilan biosfer 1g, dan skala eksponensial kuadriliun dunia dalam satu kesatuan canon yang utuh dan konsisten."
+            }
+        ];
+
+        let cachedLoreList = [];
+
+        function loadLoreFromIndexedDB() {
+            if (!db) return;
+            const tx = db.transaction([LORE_STORE_NAME], "readonly");
+            const store = tx.objectStore(LORE_STORE_NAME);
+            const req = store.getAll();
+
+            req.onsuccess = () => {
+                let records = req.result;
+                if (records.length === 0) {
+                    // Seed data awal jika masih kosong
+                    seedDefaultLore();
+                    return;
+                }
+                // Urutkan berdasarkan ID integer
+                records.sort((a, b) => a.id - b.id);
+                cachedLoreList = records;
+                renderLoreCards(records);
+                document.getElementById('loreCountDisplay').innerText = records.length;
+                document.getElementById('loreIndex').value = records.length + 1;
+            };
+        }
+
+        function seedDefaultLore() {
+            const tx = db.transaction([LORE_STORE_NAME], "readwrite");
+            const store = tx.objectStore(LORE_STORE_NAME);
+            DEFAULT_CANON_PARAGRAPHS.forEach(item => store.put(item));
+            tx.oncomplete = () => loadLoreFromIndexedDB();
+        }
+
+        function renderLoreCards(records) {
+            const container = document.getElementById('loreCardsContainer');
+            container.innerHTML = '';
+
+            records.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'lore-card';
+                card.innerHTML = `
+                    <div class="lore-header">
+                        <div class="lore-title">${item.id}. ${item.title}</div>
+                        <button class="lore-action-btn" onclick="deleteLoreEntry(${item.id})">[Hapus]</button>
+                    </div>
+                    <div class="lore-body">${item.content}</div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function addNewLoreEntry() {
+            const idVal = parseInt(document.getElementById('loreIndex').value);
+            const titleVal = document.getElementById('loreTitle').value.trim();
+            const contentVal = document.getElementById('loreContent').value.trim();
+
+            if (!idVal || !titleVal || !contentVal) {
+                alert("Harap isi Nomor Urut, Sub-Judul, dan Isi Narasi!");
+                return;
+            }
+
+            const tx = db.transaction([LORE_STORE_NAME], "readwrite");
+            const store = tx.objectStore(LORE_STORE_NAME);
+            store.put({ id: idVal, title: titleVal, content: contentVal });
+
+            tx.oncomplete = () => {
+                document.getElementById('loreTitle').value = '';
+                document.getElementById('loreContent').value = '';
+                loadLoreFromIndexedDB();
+            };
+        }
+
+        function deleteLoreEntry(id) {
+            if (confirm(`Hapus paragraf Canon Lore nomor ${id}?`)) {
+                const tx = db.transaction([LORE_STORE_NAME], "readwrite");
+                tx.objectStore(LORE_STORE_NAME).delete(id);
+                tx.oncomplete = () => loadLoreFromIndexedDB();
+            }
+        }
+
+        // EKSPOR KE FORMAT TXT
+        function exportLoreTXT() {
+            if (cachedLoreList.length === 0) return;
+            let txtOutput = "================================================================================\n";
+            txtOutput += "                   ARSIP KOSMOLOGI CANON: SISTEM LOVITHAR\n";
+            txtOutput += "               GALAKSI MENZALARIS - SKALA EKSPONENSIAL MAKRO\n";
+            txtOutput += "================================================================================\n\n";
+
+            cachedLoreList.forEach(item => {
+                txtOutput += `[BAB ${item.id}] ${item.title.toUpperCase()}\n`;
+                txtOutput += `${"-".repeat(item.title.length + 10)}\n`;
+                txtOutput += `${item.content}\n\n`;
+            });
+
+            const blob = new Blob([txtOutput], { type: "text/plain;charset=utf-8" });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `Canon_Lore_Lovithar_${Date.now()}.txt`;
+            link.click();
+        }
+
+        // EKSPOR KE PDF CYBERPUNK FUTURISTIK VIA HTML2PDF
+        function exportLoreCyberpunkPDF() {
+            if (cachedLoreList.length === 0) return;
+
+            const pdfBody = document.getElementById('cyberpunk-pdf-body');
+            pdfBody.innerHTML = '';
+
+            cachedLoreList.forEach(item => {
+                const sec = document.createElement('div');
+                sec.className = 'cyber-section';
+                sec.innerHTML = `
+                    <div class="cyber-sec-title">> [LOG_${item.id.toString().padStart(2, '0')}] ${item.title}</div>
+                    <div class="cyber-content">${item.content}</div>
+                `;
+                pdfBody.appendChild(sec);
+            });
+
+            const element = document.getElementById('cyberpunk-pdf-template');
+            element.style.display = 'block';
+
+            const opt = {
+                margin:       10,
+                filename:     `Canon_Lore_Cyberpunk_Menzalaris_${Date.now()}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, backgroundColor: '#050814' },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save().then(() => {
+                element.style.display = 'none';
+            });
+        }
+
+        // ==========================================
+        // INDEXEDDB DATABASE INITIALIZATION
+        // ==========================================
+        const DB_NAME = "LovitharSystemDB";
+        const DB_VERSION = 2; // Incremented for Lore Store
+        const STORE_NAME = "planet_catalog";
+        let db;
+
+        function initIndexedDB() {
+            const request = indexedDB.open(DB_NAME, DB_VERSION);
+            request.onerror = (e) => console.error("IndexedDB Error:", e);
+            request.onsuccess = (e) => {
+                db = e.target.result;
+                loadCatalogFromIndexedDB();
+                loadLoreFromIndexedDB();
+            };
+            request.onupgradeneeded = (e) => {
+                db = e.target.result;
+                if (!db.objectStoreNames.contains(STORE_NAME)) {
+                    const store = db.createObjectStore(STORE_NAME, { keyPath: "uniqueCode" });
+                    store.createIndex("zoneCode", "zoneCode", { unique: false });
+                    store.createIndex("typeCode", "typeCode", { unique: false });
+                }
+                if (!db.objectStoreNames.contains(LORE_STORE_NAME)) {
+                    db.createObjectStore(LORE_STORE_NAME, { keyPath: "id" });
+                }
+            };
+        }
+        initIndexedDB();
+
+        // ==========================================
+        // GENERATOR LOGIC ENGINE (PLANET CATALOG)
+        // ==========================================
+        const ZONE_CONFIGS = {
+            'Z1': {
+                name: 'Pyro-Metalik',
+                ringMin: 1, ringMax: 8192,
+                types: [
+                    { code: 'LW', name: 'Lava World', dMin: 30000, dMax: 55000, grav: 'Fluktuatif Magmatik', desc: 'Lautan silikat cair aktif dan busur radiasi Lovithar murni.' },
+                    { code: 'ME', name: 'Logam / Besi', dMin: 20000, dMax: 35000, grav: 'Tinggi Alami (2.1g)', desc: 'Kerak feromagnetik masif murni tanpa lapisan mantel silikat.' },
+                    { code: 'MG', name: 'Magnet World', dMin: 25000, dMax: 45000, grav: 'Induksi Fluks Plasma', desc: 'Dinamo magnetosferik hiper-aktif pemicu badai radiasi konstan.' },
+                    { code: 'MC', name: 'Mercury-like', dMin: 12500, dMax: 18000, grav: 'Rendah (0.42g)', desc: 'Silikat padat penuh kawah tumbukan tanpa selubung atmosfer.' }
+                ]
+            },
+            'Z2': {
+                name: 'Transisi Dalam',
+                ringMin: 8193, ringMax: 16384,
+                types: [
+                    { code: 'VN', name: 'Venus-like', dMin: 28000, dMax: 50000, grav: '0.94g Hiperbarik', desc: 'Efek rumah kaca runaway dengan atmosfer asam sulfat pekat.' },
+                    { code: 'SE', name: 'Super-Earth', dMin: 60000, dMax: 180000, grav: '1.0g (Terkunci M.E)', desc: 'Mega-benua batuan masif dengan gravitasi dipangkas oleh Material Eksotis.' }
+                ]
+            },
+            'Z3': {
+                name: 'Zona Biosfer Utama',
+                ringMin: 16385, ringMax: 34816,
+                types: [
+                    { code: 'EL', name: 'Earthlike', dMin: 12742, dMax: 40000, grav: '1.0g (Terkunci M.E)', desc: 'Biosfer air-oksigen seimbang dengan iklim stabil mandi foton Lovithar.' },
+                    { code: 'OW', name: 'Ocean World', dMin: 35000, dMax: 80000, grav: '1.0g (Terkunci M.E)', desc: 'Samudra global berkedalaman 250 km tanpa daratan kontinental.' },
+                    { code: 'MA', name: 'Mars-like', dMin: 18000, dMax: 26000, grav: '0.38g Standar', desc: 'Dataran oksida besi kering dengan cadangan es kutub tersembunyi.' }
+                ]
+            },
+            'Z4': {
+                name: 'Zona Jovian & Gas',
+                ringMin: 34817, ringMax: 47104,
+                types: [
+                    { code: 'GS', name: 'Gas (Sedang)', dMin: 650000, dMax: 1800000, grav: 'Gradien Atmosferik', desc: 'Raksasa gas sabuk hidrogen-helium stabil dengan badai siklonik.' },
+                    { code: 'SJ', name: 'Super-Jovian', dMin: 1800000, dMax: 4300000, grav: 'Ekstrem Non-Fusi', desc: 'Mega-cakram gas raksasa puncak sistem tanpa batas degradasi fusi.' }
+                ]
+            },
+            'Z5': {
+                name: 'Krio-Fluida & Es',
+                ringMin: 47105, ringMax: 57344,
+                types: [
+                    { code: 'IG', name: 'Ice Giant', dMin: 180000, dMax: 650000, grav: 'Fluida Mantis', desc: 'Selubung tebal metana, air superkritis, dan amonia bertekanan.' },
+                    { code: 'GL', name: 'Es Padat / Glacial', dMin: 40000, dMax: 95000, grav: '0.85g', desc: 'Kerak kriovulkanik beku mutlak dengan geiser gas nitrogen aktif.' }
+                ]
+            },
+            'Z6': {
+                name: 'Periferal Luar',
+                ringMin: 57345, ringMax: 65536,
+                types: [
+                    { code: 'OT', name: 'Outer Terrestrial', dMin: 30000, dMax: 65000, grav: '0.62g', desc: 'Dunia silikat beku purba di lingkar terluar jangkauan Lovithar.' },
+                    { code: 'DW', name: 'Dwarf Planet', dMin: 8900, dMax: 12500, grav: '0.18g', desc: 'Batas bawah dimensi sistem (8.900 km) di tepian 1.850 tahun cahaya.' }
+                ]
+            }
+        };
+
+        function generateBatchPlanets() {
+            const zoneSelect = document.getElementById('genZone').value;
+            const count = parseInt(document.getElementById('genCount').value);
+            const zonesToUse = (zoneSelect === 'ALL') ? ['Z1', 'Z2', 'Z3', 'Z4', 'Z5', 'Z6'] : [zoneSelect];
+
+            const tx = db.transaction([STORE_NAME], "readwrite");
+            const store = tx.objectStore(STORE_NAME);
+
+            for (let i = 0; i < count; i++) {
+                const zCode = zonesToUse[Math.floor(Math.random() * zonesToUse.length)];
+                const zData = ZONE_CONFIGS[zCode];
+                const pType = zData.types[Math.floor(Math.random() * zData.types.length)];
+
+                const ringIndexDec = Math.floor(Math.random() * (zData.ringMax - zData.ringMin + 1)) + zData.ringMin;
+                const slotIndexDec = Math.floor(Math.random() * 131072) + 1;
+
+                const ringHex = ringIndexDec.toString(16).toUpperCase().padStart(4, '0');
+                const slotHex = slotIndexDec.toString(16).toUpperCase().padStart(5, '0');
+                const uniqueCode = `LV-${pType.code}-${ringHex}-${slotHex}`;
+
+                const diameterKm = Math.floor(Math.random() * (pType.dMax - pType.dMin + 1)) + pType.dMin;
+
+                const planetRecord = {
+                    uniqueCode: uniqueCode,
+                    zoneCode: zCode,
+                    zoneName: zData.name,
+                    typeCode: pType.code,
+                    typeName: pType.name,
+                    ringDec: ringIndexDec,
+                    ringHex: ringHex,
+                    slotDec: slotIndexDec,
+                    slotHex: slotHex,
+                    diameter: diameterKm,
+                    gravity: pType.grav,
+                    desc: pType.desc,
+                    timestamp: Date.now() + i
+                };
+
+                store.put(planetRecord);
+            }
+
+            tx.oncomplete = () => {
+                loadCatalogFromIndexedDB();
+            };
+        }
+
+        let fullCachedCatalog = [];
+        function loadCatalogFromIndexedDB() {
+            if (!db) return;
+            const tx = db.transaction([STORE_NAME], "readonly");
+            const store = tx.objectStore(STORE_NAME);
+            const req = store.getAll();
+
+            req.onsuccess = () => {
+                fullCachedCatalog = req.result.reverse();
+                document.getElementById('dbCountDisplay').innerText = fullCachedCatalog.length.toLocaleString('id-ID');
+                renderCatalogTable(fullCachedCatalog);
+            };
+        }
+
+        function renderCatalogTable(records) {
+            const tbody = document.getElementById('catalogTableBody');
+            tbody.innerHTML = '';
+
+            if (records.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#64748b; padding:30px;">Belum ada entri planet di database. Silakan generate batch baru.</td></tr>';
+                return;
+            }
+
+            const displayLimit = Math.min(records.length, 250);
+            for (let i = 0; i < displayLimit; i++) {
+                const p = records[i];
+                const tr = document.createElement('tr');
+                
+                const gravBadge = p.gravity.includes('1.0g') 
+                    ? `<span class="tag-1g">${p.gravity}</span>` 
+                    : `<span class="mono" style="font-size:0.75rem; color:#94a3b8;">${p.gravity}</span>`;
+
+                tr.innerHTML = `
+                    <td><span class="code-pill">${p.uniqueCode}</span></td>
+                    <td class="mono">#${p.ringHex} <span style="color:#64748b;">(${p.ringDec.toLocaleString()})</span></td>
+                    <td class="mono">#${p.slotHex} <span style="color:#64748b;">(${p.slotDec.toLocaleString()})</span></td>
+                    <td><b>${p.typeName}</b></td>
+                    <td class="mono">${p.diameter.toLocaleString('id-ID')} km</td>
+                    <td>${gravBadge}</td>
+                    <td><b style="color:#93c5fd;">[${p.zoneName}]</b> <span style="font-size:0.75rem; color:#94a3b8;">${p.desc}</span></td>
+                `;
+                tbody.appendChild(tr);
+            }
+        }
+
+        function filterCatalogTable() {
+            const query = document.getElementById('dbSearch').value.toLowerCase();
+            if (!query) {
+                renderCatalogTable(fullCachedCatalog);
+                return;
+            }
+            const filtered = fullCachedCatalog.filter(p => 
+                p.uniqueCode.toLowerCase().includes(query) ||
+                p.typeName.toLowerCase().includes(query) ||
+                p.zoneName.toLowerCase().includes(query) ||
+                p.ringHex.toLowerCase().includes(query) ||
+                p.slotHex.toLowerCase().includes(query)
+            );
+            renderCatalogTable(filtered);
+        }
+
+        function clearIndexedDBData() {
+            if (confirm("Hapus seluruh katalog data planet yang tersimpan di IndexedDB?")) {
+                const tx = db.transaction([STORE_NAME], "readwrite");
+                tx.objectStore(STORE_NAME).clear();
+                tx.oncomplete = () => loadCatalogFromIndexedDB();
+            }
+        }
+
+        function exportIndexedDBExcel() {
+            if (fullCachedCatalog.length === 0) {
+                alert("Database masih kosong! Generate data terlebih dahulu.");
+                return;
+            }
+
+            const excelRows = fullCachedCatalog.map((p, index) => ({
+                "No": index + 1,
+                "Kode Unik (Hex)": p.uniqueCode,
+                "Zona Orbital": p.zoneName,
+                "Tipe Planet": p.typeName,
+                "Cincin Orbit (Hex)": `#${p.ringHex}`,
+                "Cincin Orbit (Desimal)": p.ringDec,
+                "Slot Orbit (Hex)": `#${p.slotHex}`,
+                "Slot Orbit (Desimal)": p.slotDec,
+                "Diameter (km)": p.diameter,
+                "Gravitasi Permukaan": p.gravity,
+                "Deskripsi & Karakteristik": p.desc
+            }));
+
+            const worksheet = XLSX.utils.json_to_sheet(excelRows);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Katalog Planet Lovithar");
+
+            worksheet['!cols'] = [
+                { wch: 6 }, { wch: 22 }, { wch: 22 }, { wch: 18 }, { wch: 18 },
+                { wch: 22 }, { wch: 16 }, { wch: 20 }, { wch: 16 }, { wch: 24 }, { wch: 65 }
+            ];
+
+            XLSX.writeFile(workbook, `Katalog_Planet_Lovithar_${Date.now()}.xlsx`);
+        }
+
+        // ==========================================
+        // 3D ENGINE (THREE.JS)
+        // ==========================================
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x020208, 0.0003);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / (window.innerHeight - 55), 1, 50000);
+        camera.position.set(0, 1800, 3200);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+        renderer.setSize(window.innerWidth, window.innerHeight - 55);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.maxDistance = 12000;
+        controls.minDistance = 50;
+
+        const starGeo = new THREE.SphereGeometry(60, 64, 64);
+        const starMat = new THREE.MeshBasicMaterial({ color: 0xfff7d6 });
+        const lovithar = new THREE.Mesh(starGeo, starMat);
+        scene.add(lovithar);
+
+        const glowGeo = new THREE.SphereGeometry(85, 32, 32);
+        const glowMat = new THREE.MeshBasicMaterial({ color: 0xffd043, transparent: true, opacity: 0.35, side: THREE.BackSide });
+        scene.add(new THREE.Mesh(glowGeo, glowMat));
+
+        const PARTICLE_COUNT = 150000;
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(PARTICLE_COUNT * 3);
+        const colors = new Float32Array(PARTICLE_COUNT * 3);
+
+        const colorMap = [
+            { rMax: 350,  col: new THREE.Color(0xf97316) },
+            { rMax: 600,  col: new THREE.Color(0xeab308) },
+            { rMax: 1100, col: new THREE.Color(0x22c55e) },
+            { rMax: 1700, col: new THREE.Color(0xa855f7) },
+            { rMax: 2100, col: new THREE.Color(0x06b6d4) },
+            { rMax: 2600, col: new THREE.Color(0x64748b) }
+        ];
+
+        for (let i = 0; i < PARTICLE_COUNT; i++) {
+            const norm = i / PARTICLE_COUNT;
+            const radius = 180 + norm * 2400 + (Math.random() - 0.5) * 6;
+            const theta = Math.random() * Math.PI * 2;
+
+            positions[i * 3] = Math.cos(theta) * radius;
+            positions[i * 3 + 1] = (Math.random() - 0.5) * 3;
+            positions[i * 3 + 2] = Math.sin(theta) * radius;
+
+            let c = colorMap[colorMap.length - 1].col;
+            for (let z = 0; z < colorMap.length; z++) {
+                if (radius <= colorMap[z].rMax) {
+                    c = colorMap[z].col;
+                    break;
+                }
+            }
+
+            colors[i * 3] = c.r;
+            colors[i * 3 + 1] = c.g;
+            colors[i * 3 + 2] = c.b;
+        }
+
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+        const pMaterial = new THREE.PointsMaterial({
+            size: 2.2,
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.85,
+            blending: THREE.AdditiveBlending
+        });
+
+        const systemRings = new THREE.Points(geometry, pMaterial);
+        scene.add(systemRings);
+
+        const superJovianGroup = new THREE.Group();
+        const sjGeo = new THREE.SphereGeometry(14, 32, 32);
+        const sjMat = new THREE.MeshStandardMaterial({ color: 0xc084fc, roughness: 0.4 });
+        
+        for(let j = 0; j < 8; j++) {
+            const sjMesh = new THREE.Mesh(sjGeo, sjMat);
+            const angle = (j / 8) * Math.PI * 2;
+            sjMesh.position.set(Math.cos(angle) * 1450, 0, Math.sin(angle) * 1450);
+            superJovianGroup.add(sjMesh);
+        }
+        scene.add(superJovianGroup);
+
+        scene.add(new THREE.AmbientLight(0x222233));
+        scene.add(new THREE.PointLight(0xffffff, 2.5, 8000));
+
+        window.setCameraView = function(view) {
+            if (view === 'overview') {
+                camera.position.set(0, 2200, 3400);
+                controls.target.set(0, 0, 0);
+            } else if (view === 'biosphere') {
+                camera.position.set(0, 350, 950);
+                controls.target.set(0, 0, 800);
+            } else if (view === 'jovian') {
+                camera.position.set(0, 200, 1600);
+                controls.target.set(0, 0, 1450);
+            }
+        };
+
+        window.exportJPEG = function() {
+            renderer.render(scene, camera);
+            const dataUrl = renderer.domElement.toDataURL('image/jpeg', 0.95);
+            const link = document.createElement('a');
+            link.download = 'Sistem_Lovithar_Macro.jpeg';
+            link.href = dataUrl;
+            link.click();
+        };
+
+        function animate() {
+            requestAnimationFrame(animate);
+            lovithar.rotation.y += 0.001;
+            systemRings.rotation.y += 0.0004;
+            superJovianGroup.rotation.y += 0.0004;
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / (window.innerHeight - 55);
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight - 55);
+        });
+
+        // ==========================================
+        // CHARTS LOGIC (CHART.JS)
+        // ==========================================
+        let chartsRendered = false;
+        function renderChartsOnce() {
+            if (chartsRendered) return;
+            chartsRendered = true;
+
+            const planetTypes = ['Earthlike', 'Ocean', 'Gas (Sedang)', 'Super-Jovian', 'Ice Giant', 'Dwarf', 'Venus-like', 'Super-Earth', 'Mars-like', 'Es Padat', 'Outer Terr.', 'Mercury-like', 'Lava', 'Logam', 'Magnet'];
+            const populations = [1073741824, 805306368, 805306368, 805306368, 805306368, 671088640, 536870912, 536870912, 536870912, 536870912, 536870912, 402653184, 268435456, 268435456, 134217728];
+            const maxDiameters = [40000, 80000, 1800000, 4300000, 650000, 12500, 50000, 180000, 26000, 95000, 65000, 18000, 55000, 35000, 45000];
+
+            new Chart(document.getElementById('chartPopulation'), {
+                type: 'bar',
+                data: {
+                    labels: planetTypes,
+                    datasets: [{
+                        label: 'Total Populasi Planet',
+                        data: populations,
+                        backgroundColor: '#3b82f6',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } },
+                        y: { grid: { display: false }, ticks: { color: '#cbd5e1', font: { size: 10 } } }
+                    }
+                }
+            });
+
+            new Chart(document.getElementById('chartZones'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Zona Biosfer (1g)', 'Zona Jovian Gas', 'Krio-Es', 'Periferal Luar', 'Pyro-Metalik', 'Transisi Dalam'],
+                    datasets: [{
+                        data: [2415919104, 1610612736, 1342177280, 1207959552, 1073741824, 1073741824],
+                        backgroundColor: ['#22c55e', '#a855f7', '#06b6d4', '#64748b', '#f97316', '#eab308']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right', labels: { color: '#cbd5e1', font: { size: 11 } } }
+                    }
+                }
+            });
+
+            new Chart(document.getElementById('chartDiameter'), {
+                type: 'bar',
+                data: {
+                    labels: planetTypes,
+                    datasets: [{
+                        label: 'Diameter Maksimal (km)',
+                        data: maxDiameters,
+                        backgroundColor: '#8b5cf6',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { type: 'logarithmic', grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } },
+                        x: { grid: { display: false }, ticks: { color: '#cbd5e1', font: { size: 10 } } }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
